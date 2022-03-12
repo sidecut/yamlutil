@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 type genericMap map[interface{}]interface{}
@@ -50,20 +50,20 @@ var listCmd = &cobra.Command{
 		data := make(stringMap)
 		yaml.Unmarshal(buf, &data)
 
-		listKeys(".", data)
+		listKeys("", data)
 	},
 }
 
 // listKeys recursively lists all the keys in a map[string]interface{}
 func listKeys(prefix string, data stringMap) {
 	for key, value := range data {
-		fmt.Printf("%v\n", strings.Join([]string{prefix, key}, "/"))
+		fmt.Printf("%v\n", strings.Join([]string{prefix, key}, "."))
 		switch t := value.(type) {
 		case string:
 			// do nothing
 		case stringMap:
 			// log.Println("Recursing")
-			listKeys(prefix+"/"+key, t)
+			listKeys(prefix+"."+key, t)
 		case interfaceArray:
 			// This is an array of things
 			listArray(prefix, value.(interfaceArray))
