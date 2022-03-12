@@ -19,8 +19,10 @@ func ProcessArgs(args []string, stdin io.Reader, eachFile func(filename string, 
 			if err != nil {
 				return err
 			} else {
-				defer f.Close()
-				eachFile(filename, f)
+				func() {
+					defer f.Close()
+					eachFile(filename, f)
+				}()
 			}
 		}
 	}
