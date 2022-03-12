@@ -69,7 +69,7 @@ If no filenames, use stdin.
 			cobra.CheckErr(err)
 		} else {
 			if automaticName && replace {
-				err := errors.New("--auto and --replace cannot both be used")
+				err := errors.New("Can't use both --auto and --replace")
 				cobra.CheckErr(err)
 			}
 
