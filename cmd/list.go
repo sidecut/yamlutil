@@ -42,7 +42,8 @@ var listCmd = &cobra.Command{
 			cobra.CheckErr(err)
 
 			data := make(genericMap)
-			yaml.Unmarshal(buf, &data)
+			err = yaml.Unmarshal(buf, &data)
+			cobra.CheckErr(err)
 
 			listKeys("", data)
 		})
