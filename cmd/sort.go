@@ -17,19 +17,26 @@ package cmd
 
 import (
 	"errors"
+	"io"
 	"io/ioutil"
-	"log"
+	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
 
-var filename string // means sort in-place
-var infilename string
-var outfilename string
-var useStdOut bool
+var replace bool
+var automaticName bool
+var useStdIn bool
 
 const eitherButNotBothErrorMessage = "--in or --file must be specified but not both"
+
+// Usage:
+// filenames are files to sort
+// -r --replace -- do an in-place sort
+// -a --auto -- automatic *.out.yaml filename
+// If no filenames, use stdin
 
 // sortCmd represents the sort command
 var sortCmd = &cobra.Command{
@@ -37,40 +44,103 @@ var sortCmd = &cobra.Command{
 	Short: "Sort YAML keys",
 	Long: `Sorts YAML keys
 
-If --file is specified, it's an in-place sort.
-If --out is specified, the input file is sorted and written to that file.
-Otherwise, the results are written to stdout.`,
-	Args: cobra.NoArgs,
+Non-option arguments are names of files to sort.
+If no filenames, use stdin.
+
+-r --replace -- do an in-place sort
+-a --auto -- automatic *.out.yaml filename`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := validateParameters()
-		cobra.CheckErr(err)
+		// _, err := cmd.OutOrStdout().Write([]byte(fmt.Sprintf("args: %#v", args)))
+		// cobra.CheckErr(err)
 
-		var yamlFile []byte
-		yamlFile, err = ioutil.ReadFile(infilename)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		var yamlContents map[string]interface{}
-		err = yaml.Unmarshal(yamlFile, &yamlContents)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		// fmt.Printf("%#v", yamlContents)
-		outBuffer, err := yaml.Marshal(yamlContents)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		if useStdOut {
-			if _, err := cmd.OutOrStdout().Write(outBuffer); err != nil {
-				log.Fatalln(err)
-			}
+		if len(args) == 0 {
+			doSort(cmd, cmd.InOrStdin(), cmd.OutOrStdout())
 		} else {
-			if err := ioutil.WriteFile(outfilename, outBuffer, 0644); err != nil {
-				log.Fatalln(err)
+			for _, filename := range args {
+				func() {
+					input, output, err := getInputAndOutputForFilename(cmd, filename)
+					defer input.Close()
+					defer output.Close()
+					if err != nil {
+						cmd.PrintErrln(err)
+						return
+					}
+					err = doSort(cmd, input, output)
+					if err != nil {
+						cmd.PrintErrln(err)
+						return
+					}
+				}()
 			}
 		}
+
 	},
+}
+
+func getInputAndOutputForFilename(cmd *cobra.Command, filename string) (input *os.File, output *os.File, err error) {
+	input, err = os.Open(filename)
+	if err != nil {
+		return
+	}
+
+	if automaticName {
+		outputFilename := ""
+		outputFilename, err = getOutputFilename(filename)
+		if err != nil {
+			return
+		}
+		output, err = os.Create(outputFilename)
+		if err != nil {
+			return
+		}
+	} else {
+		output = cmd.OutOrStdout().(*os.File)
+	}
+
+	return
+}
+
+func getOutputFilename(filename string) (string, error) {
+	const out_yaml = ".out.yaml"
+	parts := strings.Split(filename, ".")
+	switch len(parts) {
+	case 0:
+		return "", errors.New("Empty filename")
+	case 1:
+		return filename + out_yaml, nil
+	default:
+		extension := parts[len(parts)-1]
+		if strings.ToLower(extension) == "yaml" {
+			return strings.Join(parts[:len(parts)-1], ".") + out_yaml, nil
+		} else {
+			return filename + out_yaml, nil
+		}
+	}
+}
+
+func doSort(cmd *cobra.Command, input io.Reader, output io.Writer) (err error) {
+	//var yamlBytes []byte
+	yamlBytes, err := ioutil.ReadAll(input) //.ReadFile(infilename)
+	if err != nil {
+		return
+	}
+
+	var yamlMap map[string]interface{}
+	err = yaml.Unmarshal(yamlBytes, &yamlMap)
+	if err != nil {
+		return
+	}
+	// fmt.Printf("%#v", yamlContents)
+	outBuffer, err := yaml.Marshal(yamlMap)
+	if err != nil {
+		return
+	}
+
+	if _, err = cmd.OutOrStdout().Write(outBuffer); err != nil {
+		return
+	}
+
+	return
 }
 
 func init() {
@@ -84,28 +154,6 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	sortCmd.Flags().StringVar(&infilename, "in", "", "Input filename.  Must not be used with --file.")
-	sortCmd.Flags().StringVar(&outfilename, "out", "", `Output filename.  Must be used with --in.  Must not be used with --file.
-If omitted, writes to stdout.`)
-	sortCmd.Flags().StringVarP(&filename, "file", "f", "", "Input and output filename; sorts in place.  Cannot be used with --in or --out.")
-}
-
-func validateParameters() (err error) {
-	// Truth table
-	if filename == "" && infilename == "" {
-		// Must use either --file or --in
-		err = errors.New(eitherButNotBothErrorMessage)
-	} else if filename == "" && infilename != "" {
-		// infilename has been specified, and use stdout if no outfilename has been specified
-		useStdOut = outfilename == ""
-	} else if filename != "" && infilename == "" && outfilename == "" {
-		infilename = filename
-		outfilename = filename
-	} else if filename != "" && infilename == "" && outfilename != "" {
-		err = errors.New("--file must be used alone")
-	} else if filename != "" && infilename != "" {
-		err = errors.New(eitherButNotBothErrorMessage)
-	}
-
-	return
+	sortCmd.Flags().BoolVarP(&replace, "replace", "r", false, "Do an in-place sort, replacing the file(s).")
+	sortCmd.Flags().BoolVarP(&automaticName, "auto", "a", false, "Automatic *.out.yaml filename.")
 }
