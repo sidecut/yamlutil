@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/sidecut/yamlutil/config"
 	"gopkg.in/yaml.v2"
 )
 
@@ -27,7 +28,7 @@ func GetYamlMap(input io.Reader) (GenericMap, error) {
 			yamlmaps = append(yamlmaps, yamlMap)
 		} else {
 			// Not our first rodeo
-			if err == io.EOF {
+			if err == io.EOF || config.Strict == false {
 				// Cool! Only one result found, so return it
 				return yamlmaps[0], nil
 			}
