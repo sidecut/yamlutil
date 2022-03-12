@@ -79,9 +79,10 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	sortCmd.Flags().StringVar(&infilename, "in", "", "Input filename")
-	sortCmd.Flags().StringVar(&outfilename, "out", "", "Output filename")
-	sortCmd.Flags().StringVarP(&filename, "file", "f", "", "Input and output filename")
+	sortCmd.Flags().StringVar(&infilename, "in", "", "Input filename.  Must not be used with -f/--file.")
+	sortCmd.Flags().StringVar(&outfilename, "out", "", `Output filename.  Must be used with --in.  Must not be used with -f/--file.
+If omitted, writes to stdout.`)
+	sortCmd.Flags().StringVarP(&filename, "file", "f", "", "Input and output filename; sorts in place.  Cannot be used with --in or --out.")
 }
 
 func validateParameters() (err error) {
