@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"io/ioutil"
 	"log"
 
@@ -23,16 +24,42 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var filename string // means sort in-place
 var infilename string
 var outfilename string
+
+const eitherButNotBothErrorMessage = "--in or -f/--file must be specified but not both"
 
 // sortCmd represents the sort command
 var sortCmd = &cobra.Command{
 	Use:   "sort",
 	Short: "Sort YAML keys",
+	Long:  eitherButNotBothErrorMessage,
 	Run: func(cmd *cobra.Command, args []string) {
+		var err error
+
+		if filename == "" && infilename == "" {
+			// Require one
+			err = errors.New(eitherButNotBothErrorMessage)
+		}
+		cobra.CheckErr(err)
+
+		if filename != "" && infilename != "" {
+			// Require one or the other but not both
+			err = errors.New(eitherButNotBothErrorMessage)
+		}
+		cobra.CheckErr(err)
+
+		if filename != "" && infilename == "" {
+			infilename = filename
+		}
+
+		if outfilename == "" {
+			outfilename = filename
+		}
+
 		var yamlFile []byte
-		yamlFile, err := ioutil.ReadFile(infilename)
+		yamlFile, err = ioutil.ReadFile(infilename)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -65,6 +92,6 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	sortCmd.Flags().StringVar(&infilename, "in", "", "Input filename")
-	sortCmd.MarkFlagRequired("in")
 	sortCmd.Flags().StringVar(&outfilename, "out", "", "Output filename")
+	sortCmd.Flags().StringVarP(&filename, "file", "f", "", "Input and output filename")
 }
