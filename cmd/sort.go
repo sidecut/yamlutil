@@ -50,6 +50,11 @@ If no filenames, use stdin.
 -r --replace -- do an in-place sort
 -a --auto -- automatic *.out.yaml filename`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if automaticName && replace {
+			err := errors.New("--auto and --replace cannot both be used")
+			cobra.CheckErr(err)
+		}
+
 		// _, err := cmd.OutOrStdout().Write([]byte(fmt.Sprintf("args: %#v", args)))
 		// cobra.CheckErr(err)
 
