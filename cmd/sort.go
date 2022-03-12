@@ -27,6 +27,7 @@ import (
 var filename string // means sort in-place
 var infilename string
 var outfilename string
+var useStdOut bool
 
 const eitherButNotBothErrorMessage = "--in or -f/--file must be specified but not both"
 
@@ -36,27 +37,8 @@ var sortCmd = &cobra.Command{
 	Short: "Sort YAML keys",
 	Long:  eitherButNotBothErrorMessage,
 	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-
-		if filename == "" && infilename == "" {
-			// Require one
-			err = errors.New(eitherButNotBothErrorMessage)
-		}
+		err := validateParameters()
 		cobra.CheckErr(err)
-
-		if filename != "" && infilename != "" {
-			// Require one or the other but not both
-			err = errors.New(eitherButNotBothErrorMessage)
-		}
-		cobra.CheckErr(err)
-
-		if filename != "" && infilename == "" {
-			infilename = filename
-		}
-
-		if outfilename == "" {
-			outfilename = filename
-		}
 
 		var yamlFile []byte
 		yamlFile, err = ioutil.ReadFile(infilename)
@@ -94,4 +76,24 @@ func init() {
 	sortCmd.Flags().StringVar(&infilename, "in", "", "Input filename")
 	sortCmd.Flags().StringVar(&outfilename, "out", "", "Output filename")
 	sortCmd.Flags().StringVarP(&filename, "file", "f", "", "Input and output filename")
+}
+
+func validateParameters() (err error) {
+	// Truth table
+	if filename == "" && infilename == "" {
+		// Must use either --file or --in
+		err = errors.New(eitherButNotBothErrorMessage)
+	} else if filename == "" && infilename != "" {
+		// infilename has been specified, and use stdout if no outfilename has been specified
+		useStdOut = outfilename == ""
+	} else if filename != "" && infilename == "" && outfilename == "" {
+		infilename = filename
+		outfilename = filename
+	} else if filename != "" && infilename == "" && outfilename != "" {
+		err = errors.New("-f/--file must be used alone")
+	} else if filename != "" && infilename != "" {
+		err = errors.New(eitherButNotBothErrorMessage)
+	}
+
+	return
 }
