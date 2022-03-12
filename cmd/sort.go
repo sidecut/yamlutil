@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -60,6 +61,10 @@ If no filenames, use stdin.
 		}
 
 		argsprocessor.ProcessArgs(args, cmd.InOrStdin(), func(filename string, file io.Reader) {
+			if len(args) > 1 && filename != argsprocessor.STDIN {
+				cmd.OutOrStdout().Write([]byte(fmt.Sprintf("%v:\n", filename)))
+			}
+
 			if filename == argsprocessor.STDIN {
 				err := doSortStdin(cmd)
 				cobra.CheckErr(err)
