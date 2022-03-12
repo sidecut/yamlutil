@@ -35,7 +35,7 @@ var listCmd = &cobra.Command{
 	Short: "List all keys in the file",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := argsprocessor.ProcessArgs(args, cmd.InOrStdin(), func(filename string, file io.Reader) {
-			if filename != "" {
+			if filename != argsprocessor.STDIN {
 				cmd.OutOrStdout().Write([]byte(fmt.Sprintf("%v:\n", filename)))
 			}
 			buf, err := ioutil.ReadAll(file)
