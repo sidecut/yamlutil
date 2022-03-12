@@ -57,7 +57,7 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.PersistentFlags().BoolVarP(&config.Strict, "strict", "", true, "whether to complain of multiple documents")
+	rootCmd.PersistentFlags().BoolVarP(&config.Strict, "strict", "s", true, "whether to complain of multiple documents")
 }
 
 // initConfig reads in config file and ENV variables if set.
