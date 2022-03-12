@@ -40,6 +40,7 @@ var sortCmd = &cobra.Command{
 If --file is specified, it's an in-place sort.
 If --out is specified, the input file is sorted and written to that file.
 Otherwise, the results are written to stdout.`,
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := validateParameters()
 		cobra.CheckErr(err)
