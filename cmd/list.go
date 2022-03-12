@@ -17,9 +17,9 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
-	"os"
 
 	"github.com/sidecut/yamlutil/argsprocessor"
 	"github.com/spf13/cobra"
@@ -34,7 +34,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all keys in the file",
 	Run: func(cmd *cobra.Command, args []string) {
-		argsprocessor.ProcessArgs(args, cmd.InOrStdin().(*os.File), cmd.ErrOrStderr(), func(filename string, file *os.File) {
+		err := argsprocessor.ProcessArgs(args, cmd.InOrStdin(), func(filename string, file io.Reader) {
 			if filename != "" {
 				cmd.OutOrStdout().Write([]byte(fmt.Sprintf("%v:\n", filename)))
 			}
@@ -46,6 +46,7 @@ var listCmd = &cobra.Command{
 
 			listKeys("", data)
 		})
+		cobra.CheckErr(err)
 	},
 }
 
