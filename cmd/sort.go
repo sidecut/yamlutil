@@ -16,7 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"flag"
 	"io/ioutil"
 	"log"
 	"os"
@@ -33,9 +32,8 @@ var sortCmd = &cobra.Command{
 	Use:   "sort",
 	Short: "Sort YAML keys",
 	Run: func(cmd *cobra.Command, args []string) {
-		flag.Parse()
 		if infilename == "" || outfilename == "" {
-			flag.Usage()
+			cmd.Usage()
 			os.Exit(1)
 		}
 
