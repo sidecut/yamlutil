@@ -58,60 +58,38 @@ If no filenames, use stdin.
 		// _, err := cmd.OutOrStdout().Write([]byte(fmt.Sprintf("args: %#v", args)))
 		// cobra.CheckErr(err)
 
+		// stdin, stdout:
+		// get yaml, sort it, write to standard out
+		//
+		// file:
+		// get yaml, sort it, write to output file
+
 		if len(args) == 0 {
 			if automaticName || replace {
 				err := errors.New("Can't use --auto or --replace with stdin")
 				cobra.CheckErr(err)
 			}
 
-			doSort(cmd, cmd.InOrStdin(), cmd.OutOrStdout())
+			err := doSortStdin(cmd)
+			cobra.CheckErr(err)
 		} else {
-			for _, filename := range args {
-				func() {
-					input, output, err := getInputAndOutputForFilename(cmd, filename)
-					defer input.Close()
-					defer output.Close()
-					if err != nil {
-						cmd.PrintErrln(err)
-						return
-					}
-					err = doSort(cmd, input, output)
-					if err != nil {
-						cmd.PrintErrln(err)
-						return
-					}
-				}()
+			for _, inputFilename := range args {
+				outputFilename, err := getOutputFilename(inputFilename)
+				doSortFile(cmd, inputFilename, outputFilename)
+				if err != nil {
+					cmd.PrintErrln("Error:", err)
+				}
 			}
 		}
-
 	},
 }
 
-func getInputAndOutputForFilename(cmd *cobra.Command, filename string) (input *os.File, output *os.File, err error) {
-	input, err = os.Open(filename)
-	if err != nil {
-		return
-	}
-
-	if automaticName {
-		outputFilename := ""
-		outputFilename, err = getOutputFilename(filename)
-		if err != nil {
-			return
-		}
-		output, err = os.Create(outputFilename)
-		if err != nil {
-			return
-		}
-	} else {
-		output = cmd.OutOrStdout().(*os.File)
-	}
-
-	return
-}
-
 func getOutputFilename(filename string) (string, error) {
-	const out_yaml = ".out.yaml"
+	if replace {
+		return filename, nil
+	}
+
+	const out_yaml = ".sorted.yaml"
 	parts := strings.Split(filename, ".")
 	switch len(parts) {
 	case 0:
@@ -128,29 +106,74 @@ func getOutputFilename(filename string) (string, error) {
 	}
 }
 
-func doSort(cmd *cobra.Command, input io.Reader, output io.Writer) (err error) {
-	//var yamlBytes []byte
-	yamlBytes, err := ioutil.ReadAll(input) //.ReadFile(infilename)
+func doSortStdin(cmd *cobra.Command) (err error) {
+	yamlMap, err := getYamlMap(cmd.InOrStdin())
 	if err != nil {
 		return
 	}
 
-	var yamlMap map[string]interface{}
-	err = yaml.Unmarshal(yamlBytes, &yamlMap)
+	err = writeSortedMap(yamlMap, cmd.OutOrStdout())
 	if err != nil {
-		return
-	}
-	// fmt.Printf("%#v", yamlContents)
-	outBuffer, err := yaml.Marshal(yamlMap)
-	if err != nil {
-		return
-	}
-
-	if _, err = cmd.OutOrStdout().Write(outBuffer); err != nil {
 		return
 	}
 
 	return
+}
+
+func doSortFile(cmd *cobra.Command, inputFilename string, outputFilename string) (err error) {
+	input, err := os.Open(inputFilename)
+	if err != nil {
+		return
+	}
+
+	yamlMap, err := getYamlMap(input)
+	if err != nil {
+		return
+	}
+	err = input.Close()
+	if err != nil {
+		return
+	}
+
+	output, err := os.Create(outputFilename)
+	if err != nil {
+		return
+	}
+	defer output.Close()
+
+	err = writeSortedMap(yamlMap, output)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func getYamlMap(input io.Reader) (yamlMap map[string]interface{}, err error) {
+	yamlBytes, err := ioutil.ReadAll(input)
+	if err != nil {
+		return
+	}
+
+	err = yaml.Unmarshal(yamlBytes, &yamlMap)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func writeSortedMap(yamlMap map[string]interface{}, output io.Writer) error {
+	outBuffer, err := yaml.Marshal(yamlMap)
+	if err != nil {
+		return err
+	}
+
+	if _, err = output.Write(outBuffer); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func init() {
