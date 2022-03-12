@@ -70,10 +70,9 @@ If no filenames, use stdin.
 				cobra.CheckErr(err)
 			} else {
 				outputFilename, err := getOutputFilename(filename)
-				doSortFile(cmd, filename, outputFilename)
-				if err != nil {
-					cmd.PrintErrln("Error:", err)
-				}
+				cobra.CheckErr(err)
+				err = doSortFile(cmd, filename, outputFilename)
+				cobra.CheckErr(err)
 			}
 		})
 	},
