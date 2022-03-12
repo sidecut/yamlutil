@@ -29,7 +29,7 @@ var infilename string
 var outfilename string
 var useStdOut bool
 
-const eitherButNotBothErrorMessage = "--in or -f/--file must be specified but not both"
+const eitherButNotBothErrorMessage = "--in or --file must be specified but not both"
 
 // sortCmd represents the sort command
 var sortCmd = &cobra.Command{
@@ -79,8 +79,8 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	sortCmd.Flags().StringVar(&infilename, "in", "", "Input filename.  Must not be used with -f/--file.")
-	sortCmd.Flags().StringVar(&outfilename, "out", "", `Output filename.  Must be used with --in.  Must not be used with -f/--file.
+	sortCmd.Flags().StringVar(&infilename, "in", "", "Input filename.  Must not be used with --file.")
+	sortCmd.Flags().StringVar(&outfilename, "out", "", `Output filename.  Must be used with --in.  Must not be used with --file.
 If omitted, writes to stdout.`)
 	sortCmd.Flags().StringVarP(&filename, "file", "f", "", "Input and output filename; sorts in place.  Cannot be used with --in or --out.")
 }
@@ -97,7 +97,7 @@ func validateParameters() (err error) {
 		infilename = filename
 		outfilename = filename
 	} else if filename != "" && infilename == "" && outfilename != "" {
-		err = errors.New("-f/--file must be used alone")
+		err = errors.New("--file must be used alone")
 	} else if filename != "" && infilename != "" {
 		err = errors.New(eitherButNotBothErrorMessage)
 	}
