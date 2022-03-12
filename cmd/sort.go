@@ -35,7 +35,11 @@ const eitherButNotBothErrorMessage = "--in or --file must be specified but not b
 var sortCmd = &cobra.Command{
 	Use:   "sort",
 	Short: "Sort YAML keys",
-	Long:  eitherButNotBothErrorMessage,
+	Long: `Sorts YAML keys
+
+If --file is specified, it's an in-place sort.
+If --out is specified, the input file is sorted and written to that file.
+Otherwise, the results are written to stdout.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := validateParameters()
 		cobra.CheckErr(err)
