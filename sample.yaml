@@ -1,0 +1,12 @@
+empty:
+x:
+  blah
+x2: hello, world! it's me, margaret!
+y: bleah
+y2: bleah
+flag: true
+0: hello
+false: hello
+null: whatevs
+# {}: "Hi, mom!"
+yes: Yes
