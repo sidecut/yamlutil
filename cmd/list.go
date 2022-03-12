@@ -18,16 +18,12 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 
 	"github.com/sidecut/yamlutil/argsprocessor"
+	"github.com/sidecut/yamlutil/yamlutilities"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
-
-type genericMap map[interface{}]interface{}
-type stringMap map[string]interface{}
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
@@ -39,11 +35,7 @@ var listCmd = &cobra.Command{
 				cmd.OutOrStdout().Write([]byte(fmt.Sprintf("%v:\n", filename)))
 			}
 
-			buf, err := ioutil.ReadAll(file)
-			cobra.CheckErr(err)
-
-			data := make(genericMap)
-			err = yaml.Unmarshal(buf, &data)
+			data, err := yamlutilities.GetYamlMap(file)
 			cobra.CheckErr(err)
 
 			listKeys("", data)
@@ -53,7 +45,7 @@ var listCmd = &cobra.Command{
 }
 
 // listKeys recursively lists all the keys in a map[string]interface{}
-func listKeys(prefix string, data genericMap) {
+func listKeys(prefix string, data yamlutilities.GenericMap) {
 	for key, value := range data {
 		fmt.Printf("%v\n", fullKey(prefix, key))
 		switch tValue := value.(type) {
@@ -63,7 +55,7 @@ func listKeys(prefix string, data genericMap) {
 			// Nothing -- don't drill down any further
 		case []interface{}:
 			listArray(fullKey(prefix, key), value.([]interface{}))
-		case genericMap:
+		case yamlutilities.GenericMap:
 			listKeys(fullKey(prefix, key), tValue)
 		case nil:
 			// Nothing

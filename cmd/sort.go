@@ -19,11 +19,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 
 	"github.com/sidecut/yamlutil/argsprocessor"
+	"github.com/sidecut/yamlutil/yamlutilities"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -79,7 +79,7 @@ If no filenames, use stdin.
 }
 
 func doSortStdin(cmd *cobra.Command) (err error) {
-	yamlMap, err := getYamlMap(cmd.InOrStdin())
+	yamlMap, err := yamlutilities.GetYamlMap(cmd.InOrStdin())
 	if err != nil {
 		return
 	}
@@ -123,7 +123,7 @@ func doSortFile(cmd *cobra.Command, inputFilename string, outputFilename string)
 		return
 	}
 
-	yamlMap, err := getYamlMap(input)
+	yamlMap, err := yamlutilities.GetYamlMap(input)
 	if err != nil {
 		return
 	}
@@ -148,21 +148,7 @@ func doSortFile(cmd *cobra.Command, inputFilename string, outputFilename string)
 	return
 }
 
-func getYamlMap(input io.Reader) (yamlMap map[string]interface{}, err error) {
-	yamlBytes, err := ioutil.ReadAll(input)
-	if err != nil {
-		return
-	}
-
-	err = yaml.Unmarshal(yamlBytes, &yamlMap)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func writeSortedMap(yamlMap map[string]interface{}, output io.Writer) error {
+func writeSortedMap(yamlMap yamlutilities.GenericMap, output io.Writer) error {
 	outBuffer, err := yaml.Marshal(yamlMap)
 	if err != nil {
 		return err
