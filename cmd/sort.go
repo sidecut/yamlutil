@@ -18,7 +18,6 @@ package cmd
 import (
 	"io/ioutil"
 	"log"
-	"os"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -32,11 +31,6 @@ var sortCmd = &cobra.Command{
 	Use:   "sort",
 	Short: "Sort YAML keys",
 	Run: func(cmd *cobra.Command, args []string) {
-		if infilename == "" || outfilename == "" {
-			cmd.Usage()
-			os.Exit(1)
-		}
-
 		var yamlFile []byte
 		yamlFile, err := ioutil.ReadFile(infilename)
 		if err != nil {
@@ -71,5 +65,6 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	sortCmd.Flags().StringVar(&infilename, "in", "", "Input filename")
+	sortCmd.MarkFlagRequired("in")
 	sortCmd.Flags().StringVar(&outfilename, "out", "", "Output filename")
 }
