@@ -59,6 +59,11 @@ If no filenames, use stdin.
 		// cobra.CheckErr(err)
 
 		if len(args) == 0 {
+			if automaticName || replace {
+				err := errors.New("Can't use --auto or --replace with stdin")
+				cobra.CheckErr(err)
+			}
+
 			doSort(cmd, cmd.InOrStdin(), cmd.OutOrStdout())
 		} else {
 			for _, filename := range args {
