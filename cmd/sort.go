@@ -22,6 +22,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/sidecut/yamlutil/argsprocessor"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -50,37 +51,26 @@ If no filenames, use stdin.
 -r --replace -- do an in-place sort
 -a --auto -- automatic *.sorted.yaml filename`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// _, err := cmd.OutOrStdout().Write([]byte(fmt.Sprintf("args: %#v", args)))
-		// cobra.CheckErr(err)
-
-		// stdin, stdout:
-		// get yaml, sort it, write to standard out
-		//
-		// file:
-		// get yaml, sort it, write to output file
-
-		if len(args) == 0 {
-			if automaticName || replace {
-				err := errors.New("Can't use --auto or --replace with stdin")
-				cobra.CheckErr(err)
-			}
-
-			err := doSortStdin(cmd)
+		if len(args) == 0 && (automaticName || replace) {
+			err := errors.New("Can't use --auto or --replace with stdin")
 			cobra.CheckErr(err)
-		} else {
-			if automaticName && replace {
-				err := errors.New("Can't use both --auto and --replace")
-				cobra.CheckErr(err)
-			}
+		} else if len(args) != 0 && automaticName && replace {
+			err := errors.New("Can't use both --auto and --replace")
+			cobra.CheckErr(err)
+		}
 
-			for _, inputFilename := range args {
-				outputFilename, err := getOutputFilename(inputFilename)
-				doSortFile(cmd, inputFilename, outputFilename)
+		argsprocessor.ProcessArgs(args, cmd.InOrStdin(), func(filename string, file io.Reader) {
+			if filename == argsprocessor.STDIN {
+				err := doSortStdin(cmd)
+				cobra.CheckErr(err)
+			} else {
+				outputFilename, err := getOutputFilename(filename)
+				doSortFile(cmd, filename, outputFilename)
 				if err != nil {
 					cmd.PrintErrln("Error:", err)
 				}
 			}
-		}
+		})
 	},
 }
 
@@ -103,14 +93,14 @@ func getOutputFilename(filename string) (string, error) {
 		return filename, nil
 	}
 	if !automaticName {
-		return "", nil
+		return argsprocessor.STDIN, nil
 	}
 
 	const out_yaml = ".sorted.yaml"
 	parts := strings.Split(filename, ".")
 	switch len(parts) {
 	case 0:
-		return "", errors.New("Empty filename")
+		return argsprocessor.STDIN, errors.New("Empty filename")
 	case 1:
 		return filename + out_yaml, nil
 	default:
@@ -138,7 +128,7 @@ func doSortFile(cmd *cobra.Command, inputFilename string, outputFilename string)
 		return
 	}
 
-	if outputFilename == "" {
+	if outputFilename == argsprocessor.STDIN {
 		output := cmd.OutOrStdout()
 		err = writeSortedMap(yamlMap, output)
 	} else {
