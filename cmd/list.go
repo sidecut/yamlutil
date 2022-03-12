@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -27,55 +28,55 @@ import (
 
 type genericMap map[interface{}]interface{}
 type stringMap map[string]interface{}
-type interfaceArray []interface{}
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all keys in the file",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			cmd.PrintErrln("Filename required")
-			return
+		switch len(args) {
+		case 0:
+			cobra.CheckErr(errors.New("Filename required"))
+
+		default:
+			for _, filename := range args {
+				buf, err := os.ReadFile(filename)
+				cobra.CheckErr(err)
+
+				data := make(genericMap)
+				yaml.Unmarshal(buf, &data)
+
+				listKeys("", data)
+			}
 		}
-
-		filename := args[0]
-		buf, err := os.ReadFile(filename)
-		if err != nil {
-			cmd.PrintErrf("%v\n", err)
-		}
-
-		// yaml := string(buf)
-		// fmt.Printf("%v\n", yaml)
-		data := make(stringMap)
-		yaml.Unmarshal(buf, &data)
-
-		listKeys("", data)
 	},
 }
 
 // listKeys recursively lists all the keys in a map[string]interface{}
-func listKeys(prefix string, data stringMap) {
+func listKeys(prefix string, data genericMap) {
 	for key, value := range data {
-		fmt.Printf("%v\n", strings.Join([]string{prefix, key}, "."))
+		fmt.Printf("%v\n", fullKey(prefix, key))
 		switch t := value.(type) {
 		case string:
 			// do nothing
-		case stringMap:
-			// log.Println("Recursing")
-			listKeys(prefix+"."+key, t)
-		case interfaceArray:
-			// This is an array of things
-			listArray(prefix, value.(interfaceArray))
+		case int:
+			// Nothing -- don't drill down any further
+		case genericMap:
+			listKeys(fullKey(prefix, key), t)
+		case []interface{}:
+			listArray(prefix, value.([]interface{}))
 		default:
-			log.Fatalf("I don't know which type this is: %T", t)
-			// panic("I don't know which type this is")
+			log.Fatalf("I don't know which type this is: %v: %T", key, t)
 		}
 	}
 }
 
+func fullKey(prefix string, key any) string {
+	return strings.Join([]string{prefix, key.(string)}, ".")
+}
+
 // listArray iterates through an array,
-func listArray(prefix string, array interfaceArray) {
+func listArray(prefix string, array []interface{}) {
 
 }
 
