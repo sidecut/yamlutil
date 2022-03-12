@@ -61,10 +61,10 @@ func listKeys(prefix string, data genericMap) {
 			// do nothing
 		case int:
 			// Nothing -- don't drill down any further
+		case []interface{}:
+			listArray(prefix, key.(string), value.([]interface{}))
 		case genericMap:
 			listKeys(fullKey(prefix, key), t)
-		case []interface{}:
-			listArray(prefix, value.([]interface{}))
 		default:
 			log.Fatalf("I don't know which type this is: %v: %T", key, t)
 		}
@@ -76,8 +76,10 @@ func fullKey(prefix string, key any) string {
 }
 
 // listArray iterates through an array,
-func listArray(prefix string, array []interface{}) {
-
+func listArray(prefix string, key string, array []interface{}) {
+	for i, _ := range array {
+		fmt.Printf("%v.%v[%v]\n", prefix, key, i)
+	}
 }
 
 func init() {
