@@ -16,11 +16,12 @@ limitations under the License.
 package cmd
 
 import (
-	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 
+	"github.com/sidecut/yamlutil/argsprocessor"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -33,21 +34,15 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all keys in the file",
 	Run: func(cmd *cobra.Command, args []string) {
-		switch len(args) {
-		case 0:
-			cobra.CheckErr(errors.New("Filename required"))
+		argsprocessor.ProcessArgs(args, cmd.InOrStdin().(*os.File), cmd.OutOrStdout(), cmd.ErrOrStderr(), func(filename string, file *os.File) {
+			buf, err := ioutil.ReadAll(file)
+			cobra.CheckErr(err)
 
-		default:
-			for _, filename := range args {
-				buf, err := os.ReadFile(filename)
-				cobra.CheckErr(err)
+			data := make(genericMap)
+			yaml.Unmarshal(buf, &data)
 
-				data := make(genericMap)
-				yaml.Unmarshal(buf, &data)
-
-				listKeys("", data)
-			}
-		}
+			listKeys("", data)
+		})
 	},
 }
 
