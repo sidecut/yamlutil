@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "yamlutil/cmd"
+import "github.com/sidecut/yamlutil/cmd"
 
 func main() {
 	cmd.Execute()
