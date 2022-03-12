@@ -84,6 +84,20 @@ If no filenames, use stdin.
 	},
 }
 
+func doSortStdin(cmd *cobra.Command) (err error) {
+	yamlMap, err := getYamlMap(cmd.InOrStdin())
+	if err != nil {
+		return
+	}
+
+	err = writeSortedMap(yamlMap, cmd.OutOrStdout())
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func getOutputFilename(filename string) (string, error) {
 	if replace {
 		return filename, nil
@@ -107,20 +121,6 @@ func getOutputFilename(filename string) (string, error) {
 			return filename + out_yaml, nil
 		}
 	}
-}
-
-func doSortStdin(cmd *cobra.Command) (err error) {
-	yamlMap, err := getYamlMap(cmd.InOrStdin())
-	if err != nil {
-		return
-	}
-
-	err = writeSortedMap(yamlMap, cmd.OutOrStdout())
-	if err != nil {
-		return
-	}
-
-	return
 }
 
 func doSortFile(cmd *cobra.Command, inputFilename string, outputFilename string) (err error) {
