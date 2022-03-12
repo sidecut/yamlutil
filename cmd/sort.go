@@ -88,6 +88,9 @@ func getOutputFilename(filename string) (string, error) {
 	if replace {
 		return filename, nil
 	}
+	if !automaticName {
+		return "", nil
+	}
 
 	const out_yaml = ".sorted.yaml"
 	parts := strings.Split(filename, ".")
@@ -135,15 +138,17 @@ func doSortFile(cmd *cobra.Command, inputFilename string, outputFilename string)
 		return
 	}
 
-	output, err := os.Create(outputFilename)
-	if err != nil {
-		return
-	}
-	defer output.Close()
+	if outputFilename == "" {
+		output := cmd.OutOrStdout()
+		err = writeSortedMap(yamlMap, output)
+	} else {
+		output, err := os.Create(outputFilename)
+		if err != nil {
+			return err
+		}
+		defer output.Close()
 
-	err = writeSortedMap(yamlMap, output)
-	if err != nil {
-		return
+		err = writeSortedMap(yamlMap, output)
 	}
 
 	return
