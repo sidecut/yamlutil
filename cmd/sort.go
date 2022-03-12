@@ -35,7 +35,7 @@ const eitherButNotBothErrorMessage = "--in or --file must be specified but not b
 // Usage:
 // filenames are files to sort
 // -r --replace -- do an in-place sort
-// -a --auto -- automatic *.out.yaml filename
+// -a --auto -- automatic *.sorted.yaml filename
 // If no filenames, use stdin
 
 // sortCmd represents the sort command
@@ -48,7 +48,7 @@ Non-option arguments are names of files to sort.
 If no filenames, use stdin.
 
 -r --replace -- do an in-place sort
--a --auto -- automatic *.out.yaml filename`,
+-a --auto -- automatic *.sorted.yaml filename`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// _, err := cmd.OutOrStdout().Write([]byte(fmt.Sprintf("args: %#v", args)))
 		// cobra.CheckErr(err)
@@ -193,5 +193,5 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	sortCmd.Flags().BoolVarP(&replace, "replace", "r", false, "Do an in-place sort, replacing the file(s).")
-	sortCmd.Flags().BoolVarP(&automaticName, "auto", "a", false, "Automatic *.out.yaml filename.")
+	sortCmd.Flags().BoolVarP(&automaticName, "auto", "a", false, "Automatic *.sorted.yaml filename.")
 }
