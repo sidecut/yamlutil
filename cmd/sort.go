@@ -56,8 +56,14 @@ var sortCmd = &cobra.Command{
 			log.Fatalln(err)
 		}
 
-		if err := ioutil.WriteFile(outfilename, outBuffer, 0644); err != nil {
-			log.Fatalln(err)
+		if useStdOut {
+			if _, err := cmd.OutOrStdout().Write(outBuffer); err != nil {
+				log.Fatalln(err)
+			}
+		} else {
+			if err := ioutil.WriteFile(outfilename, outBuffer, 0644); err != nil {
+				log.Fatalln(err)
+			}
 		}
 	},
 }
