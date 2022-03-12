@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -55,48 +54,36 @@ var listCmd = &cobra.Command{
 // listKeys recursively lists all the keys in a map[string]interface{}
 func listKeys(prefix string, data genericMap) {
 	for key, value := range data {
-		switch tKey := key.(type) {
-		case bool, int, nil:
-			// Degenerate case for when a key and value are not on the same line
-			// Do nothing
-			// log.Printf("The type of the key %v.%v is bool", prefix, key)
-		case string:
-			fmt.Printf("%v\n", fullKey(prefix, key))
-			switch tValue := value.(type) {
-			case string, bool:
-				// do nothing
-			case int:
-				// Nothing -- don't drill down any further
-			case []interface{}:
-				listArray(prefix, key.(string), value.([]interface{}))
-			case genericMap:
-				listKeys(fullKey(prefix, key), tValue)
-			case nil:
-				// Nothing
-			default:
-				log.Fatalf("I don't know which type this value is: %v: %T", key, tValue)
-			}
+		fmt.Printf("%v\n", fullKey(prefix, key))
+		switch tValue := value.(type) {
+		case string, bool:
+			// do nothing
+		case int:
+			// Nothing -- don't drill down any further
+		case []interface{}:
+			listArray(fullKey(prefix, key), value.([]interface{}))
+		case genericMap:
+			listKeys(fullKey(prefix, key), tValue)
+		case nil:
+			// Nothing
 		default:
-			// This should never happen
-			log.Fatalf("I don't know which type this key is: %v: %T", key, tKey)
+			log.Fatalf("I don't know which type this value is: %v: %T", key, tValue)
 		}
 	}
 }
 
 func fullKey(prefix string, key any) string {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("Panic: %v", r)
-			log.Printf("\tprefix: %#v, key: %#v\n", prefix, key)
-		}
-	}()
-	return strings.Join([]string{prefix, key.(string)}, ".")
+	if _, ok := key.(string); ok {
+		return fmt.Sprintf("%v.%v", prefix, key)
+	} else {
+		return fmt.Sprintf("%v.\"%v\"", prefix, key)
+	}
 }
 
 // listArray iterates through an array,
-func listArray(prefix string, key string, array []interface{}) {
+func listArray(key string, array []interface{}) {
 	for i := range array {
-		fmt.Printf("%v.%v[%v]\n", prefix, key, i)
+		fmt.Printf("%v[%v]\n", key, i)
 	}
 }
 
