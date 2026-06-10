@@ -3,7 +3,8 @@
     "git": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "/Users/jimraden/Projects/yamlutil"]
+      "args": ["-y", "mcp-git", "--repository", "/Users/jimraden/Projects/yamlutil"],
+      "env": {}
     },
     "filesystem": {
       "type": "stdio",
