@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "git": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "/Users/jimraden/Projects/yamlutil"]
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/jimraden/Projects/yamlutil"]
+    }
+  }
+}
