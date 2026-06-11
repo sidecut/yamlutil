@@ -1,1 +1,5 @@
-/yamlutil
+# Cargo build artifacts
+/target
+
+# Local sort artifacts (created by `yamlutil sort --auto`)
+*.sorted.yaml
